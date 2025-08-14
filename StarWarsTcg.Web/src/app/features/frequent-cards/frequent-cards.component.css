@@ -1,0 +1,14 @@
+.scrollable-container {
+    overflow-x: auto; /* Enable horizontal scrolling */
+    white-space: nowrap; /* Prevent line breaks */
+    padding: 10px; /* Optional: Add some padding */
+}
+
+.row {
+    display: flex; /* Use flexbox for horizontal layout */
+}
+
+.col-lg-2, .col-sm-2 {
+    flex: 0 0 auto; /* Prevent flex items from shrinking */
+    margin-right: 10px; /* Optional: Space between items */
+}

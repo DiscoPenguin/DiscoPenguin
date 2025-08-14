@@ -1,0 +1,30 @@
+.icon-grid {
+    display: flex; /* Use flexbox for horizontal layout */
+    overflow-x:scroll; /* Enable horizontal scrolling */
+    white-space: nowrap; /* Prevent images from wrapping */
+    padding: 10px;
+    width: auto;
+    height: 110px;
+  }
+  
+  .icon-item {
+    display: inline-flex; /* Use inline-flex to keep items in a row */
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-right: 10px; /* Add spacing between images */
+    height:fit-content;
+  }
+  
+  .icon-item:last-child {
+    margin-right: 0; /* Remove right margin from the last item */
+  }
+
+  .icon-item img {
+    max-width: 64px;
+    max-height: 100%;
+  }
+  .icon-item .selected {
+    border: 5px solid red;
+  }

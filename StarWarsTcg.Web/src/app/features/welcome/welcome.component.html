@@ -1,0 +1,86 @@
+<div class="container text-center mt-5">
+
+  <div class="row">
+    <div class="col-lg-12">
+      <h2>Welcome to the Star Wars TCG</h2>
+      <p>Explore the universe of Star Wars Trading Card Game. Whether you're a new player or a seasoned veteran, there's something for everyone!</p>
+    </div>
+  </div>  
+
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="page-content">
+
+          <!-- ***** Banner Start ***** -->
+          <div class="main-banner">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="row">
+                  <div class="col">
+                    <div class="header-text">
+                      <h4>Browse historical games</h4>
+                      <div class="main-button">
+                        <a class="styled-button" href="browse.html">Browse Games</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row m-3">
+                  <div class="col">
+                    <div class="header-text">
+                      <h4>Browse decks</h4>
+                      <div class="main-button">
+                        <a class="styled-button" href="browse.html">Browse Decks</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <app-leaderboard></app-leaderboard>
+              </div>
+            </div>
+          </div>
+          <!-- ***** Banner End ***** -->
+
+          <div class="most-popular-cards">
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="heading-section">
+                  <h4>Most Popular Cards</h4>
+                </div>
+                <div class="row">
+                  <app-frequent-cards></app-frequent-cards>
+                </div>
+                <div class="row">
+                  <div class="col-lg-12">
+                    <div class="main-button">
+                      <a class="styled-button" [routerLink]="['/cards/cardlist']" class="btn">Discover more...</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ***** Most Popular End ***** -->
+
+      </div>
+    </div>
+  </div>
+  
+  <div *ngIf="!authService.isAuthenticated(); else loggedInTemplate">
+    <h3>Anonymous User Section</h3>
+    <p>Please log in to access more features.</p>
+    <ul>
+      <li>Browse games to watch</li>
+      <li>Browse historical games</li>
+      <li>(AUTH) Your games</li>
+    </ul>
+  </div>
+
+  <ng-template #loggedInTemplate>
+    <h3>Authenticated User Section</h3>
+    <p>Welcome back! Enjoy your time.</p>
+    <a routerLink="/admin" class="btn btn-success">Go to Admin Dashboard</a>
+  </ng-template>
+</div>

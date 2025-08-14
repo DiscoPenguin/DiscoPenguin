@@ -1,0 +1,7 @@
+<div class="scrollable-container">
+    <div class="row flex-nowrap">
+        <div class="col-lg-2 col-sm-2 m-1" *ngFor="let fc of frequentCards">
+            <app-card-display [totalQuantity]="fc.totalQuantity" [frequency]="fc.frequency" [showFront]="true" [card]="fc.card" size="m"></app-card-display>
+        </div>
+    </div>
+</div>

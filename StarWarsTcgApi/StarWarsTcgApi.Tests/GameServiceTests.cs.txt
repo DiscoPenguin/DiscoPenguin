@@ -1,0 +1,452 @@
+using Xunit;
+using Moq;
+
+using System.Collections.Generic;
+using System.Linq;
+using System;
+using System.Text.Json;
+using System.Threading.Tasks;
+using System.Transactions;
+
+using StarWarsTcgApi.Application.Interfaces;
+using StarWarsTcgApi.Application.Services;
+using StarWarsTcgApi.Domain.Interfaces;
+using StarWarsTcgApi.Domain.Models;
+
+namespace StarWarsTcgApi.Tests
+{
+    public class GameServiceTests
+    {
+        // Declare Mock objects for the repositories
+        private readonly Mock<IUserRepository> _mockUserRepository;
+        private readonly Mock<IGameCardRepository> _mockGameCardRepository;
+        private readonly Mock<IGameLogRepository> _mockGameLogRepository;
+        private readonly Mock<IGameRepository> _mockGameRepository;
+        private readonly Mock<IPlayerRepository> _mockPlayerRepository;
+        private readonly Mock<IDeckRepository> _mockDeckRepository;
+        private readonly Mock<ICardRepository> _mockCardRepository;
+
+        // The service we are testing
+        private readonly GameService _gameService;
+
+        public GameServiceTests()
+        {
+            // Initialize mocks in the constructor for each test run
+            _mockGameRepository = new Mock<IGameRepository>();
+            _mockPlayerRepository = new Mock<IPlayerRepository>();
+            _mockDeckRepository = new Mock<IDeckRepository>();
+            _mockCardRepository = new Mock<ICardRepository>();
+            _mockUserRepository = new Mock<IUserRepository>();
+            _mockGameCardRepository = new Mock<IGameCardRepository>();
+            _mockGameLogRepository = new Mock<IGameLogRepository>();
+
+            // Instantiate the GameService with the mock objects
+            _gameService = new GameService(
+                _mockGameRepository.Object,
+                _mockUserRepository.Object,
+                _mockPlayerRepository.Object,
+                _mockDeckRepository.Object,
+                _mockGameCardRepository.Object,
+                _mockCardRepository.Object,
+                _mockGameLogRepository.Object
+            );
+        }
+
+        [Fact] // XUnit attribute to mark a method as a test
+        public async Task CreateNewGameAsync_ShouldCreateGameAndInitializeDecks()
+        {
+            // Arrange
+            int lightUserId = 1;
+            int darkUserId = 2;
+            int lightPlayerId = 11;
+            int darkPlayerId = 12;
+            int lightDeckId = 101;
+            int darkDeckId = 102;
+            int newGameId = 1000;
+
+            #region Setup mock behavior for UserRepository
+            _mockUserRepository.Setup(r => r.GetByIdAsync(lightUserId))
+                .ReturnsAsync(new Domain.Models.User { Id = lightUserId, Name = "Light Player", Avatar = string.Empty, CreatedAt = DateTime.UtcNow });
+            _mockUserRepository.Setup(r => r.GetByIdAsync(darkUserId))
+                .ReturnsAsync(new Domain.Models.User { Id = darkUserId, Name = "Dark Player", Avatar = string.Empty, CreatedAt = DateTime.UtcNow });
+            #endregion
+            #region Setup mock behavior for PlayerRepository
+            _mockPlayerRepository.Setup(r => r.GetByIdAsync(lightPlayerId))
+                .ReturnsAsync(new Player { Id = lightPlayerId, GameId = newGameId, UserId = lightUserId, BuildPoints = 0, ForceTotal = 0 });
+            _mockPlayerRepository.Setup(r => r.GetByIdAsync(darkPlayerId))
+                .ReturnsAsync(new Player { Id = darkPlayerId, GameId = newGameId, UserId = darkUserId, BuildPoints = 0, ForceTotal = 0 });
+            #endregion
+            #region Setup mock behavior for DeckRepository
+            _mockDeckRepository.Setup(r => r.GetByIdAsync(lightDeckId))
+                .ReturnsAsync(new Deck
+                {
+                    Id = lightDeckId,
+                    Description = "Light Deck [Test]",
+                    Name = "Light Deck [Test]",
+                    CreatedBy = lightUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    IsValid = true,
+                    DeckCards = null
+                });
+            _mockDeckRepository.Setup(r => r.GetByIdAsync(darkDeckId))
+                .ReturnsAsync(new Deck
+                {
+                    Id = darkDeckId,
+                    Description = "Dark Deck [Test]",
+                    Name = "Dark Deck [Test]",
+                    CreatedBy = darkUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    IsValid = true,
+                    DeckCards = null
+                });
+            #endregion
+            #region Setup mock behavior for DeckCards (what's in the decks)
+            var lightPlayerDeckCards = new List<DeckCard>
+            {
+                new DeckCard { DeckId = lightDeckId, CardDefinitionId = 1, Quantity = 2 }, // 2 copies of card 1
+                new DeckCard { DeckId = lightDeckId, CardDefinitionId = 2, Quantity = 1 }  // 1 copy of card 2
+            };
+            _mockDeckRepository.Setup(r => r.GetDeckCardsByDeckIdAsync(player1DeckId))
+                .ReturnsAsync(player1DeckCards);
+
+            var player2DeckCards = new List<DeckCard>
+            {
+                new DeckCard { DeckId = player2DeckId, CardDefinitionId = 3, Quantity = 3 },
+                new DeckCard { DeckId = player2DeckId, CardDefinitionId = 4, Quantity = 1 }
+            };
+            _mockDeckRepository.Setup(r => r.GetDeckCardsByDeckIdAsync(player2DeckId))
+                .ReturnsAsync(player2DeckCards);
+            #endregion
+            // Setup mock behavior for GameRepository
+            _mockGameRepository.Setup(r => r.CreateGameAsync(It.IsAny<Game>()))
+                .ReturnsAsync((Game game) => { game.GameId = newGameId; return game; }); // Assign a game ID
+            _mockGameRepository.Setup(r => r.AddGameCardAsync(It.IsAny<GameCard>()))
+                .Returns(Task.CompletedTask); // Just complete the task, no need to return a value
+            _mockGameRepository.Setup(r => r.AddGameLogEntryAsync(It.IsAny<GameLogEntry>()))
+                .Returns(Task.CompletedTask);
+
+
+            // Act
+            var createdGame = await _gameService.CreateNewGameAsync(player1Id, player2Id, player1DeckId, player2DeckId);
+
+            // Assert
+            Assert.NotNull(createdGame);
+            Assert.Equal(newGameId, createdGame.GameId);
+            Assert.Equal(player1Id, createdGame.Player1Id);
+            Assert.Equal(player2Id, createdGame.Player2Id);
+            Assert.Equal(player1Id, createdGame.CurrentTurnPlayerId); // Player 1 starts
+            Assert.Equal(GamePhase.Setup.ToString(), createdGame.CurrentPhase);
+
+            // Verify that game repository methods were called as expected
+            _mockGameRepository.Verify(r => r.CreateGameAsync(It.IsAny<Game>()), Times.Once);
+
+            // Verify that AddGameCardAsync was called for all cards in both decks
+            // Player 1 deck has 2+1 = 3 cards. Player 2 deck has 3+1 = 4 cards. Total 7.
+            _mockGameRepository.Verify(r => r.AddGameCardAsync(It.Is<GameCard>(gc => gc.GameId == newGameId && gc.OwnerPlayerId == player1Id && gc.Zone == GameZone.Deck.ToString())), Times.Exactly(3));
+            _mockGameRepository.Verify(r => r.AddGameCardAsync(It.Is<GameCard>(gc => gc.GameId == newGameId && gc.OwnerPlayerId == player2Id && gc.Zone == GameZone.Deck.ToString())), Times.Exactly(4));
+            _mockGameRepository.Verify(r => r.AddGameLogEntryAsync(It.Is<GameLogEntry>(log => log.ActionType == "GameCreated")), Times.Once);
+        }
+
+        [Fact]
+        public async Task DrawCardAsync_ShouldMoveCardFromDeckToHandAndLog()
+        {
+            // Arrange
+            int gameId = 1;
+            int drawingPlayerId = 1;
+            int cardDefinitionId = 10;
+            int gameCardId = 100;
+
+            // Set up a mock Game object with a current turn player
+            var game = new Game { GameId = gameId, CurrentTurnPlayerId = drawingPlayerId };
+            game.SetTurnNumber(1); // Set a turn number for logging
+
+            // Set up a mock GameCard in the deck
+            var cardInDeck = new GameCard
+            {
+                GameCardId = gameCardId,
+                GameId = gameId,
+                CardDefinitionId = cardDefinitionId,
+                OwnerPlayerId = drawingPlayerId,
+                CurrentPlayerId = drawingPlayerId,
+                Zone = GameZone.Deck.ToString(),
+                ZoneOrder = 1 // This will be the "top" card
+            };
+
+            // Set up a mock CardDefinition
+            var cardDef = new CardDefinition { CardDefinitionId = cardDefinitionId, CardName = "Test Card" };
+
+            // Mock repository calls
+            _mockGameRepository.Setup(r => r.GetGameByIdAsync(gameId)).ReturnsAsync(game);
+            _mockGameRepository.Setup(r => r.GetGameCardsByGameIdAsync(gameId))
+                .ReturnsAsync(new List<GameCard> { cardInDeck }); // Only this card is in the deck
+            _mockCardDefinitionRepository.Setup(r => r.GetAllCardDefinitionsAsync())
+                .ReturnsAsync(new List<CardDefinition> { cardDef });
+            _mockGameRepository.Setup(r => r.UpdateGameCardAsync(It.IsAny<GameCard>())).Returns(Task.CompletedTask);
+            _mockGameRepository.Setup(r => r.AddGameLogEntryAsync(It.IsAny<GameLogEntry>())).Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _gameService.DrawCardAsync(gameId, drawingPlayerId);
+
+            // Assert
+            Assert.True(result); // Should succeed
+
+            // Verify that the card was updated
+            _mockGameRepository.Verify(r => r.UpdateGameCardAsync(It.Is<GameCard>(
+                gc => gc.GameCardId == gameCardId && gc.Zone == GameZone.Hand.ToString()
+            )), Times.Once);
+
+            // Verify that a log entry was added
+            _mockGameRepository.Verify(r => r.AddGameLogEntryAsync(It.Is<GameLogEntry>(
+                log => log.GameId == gameId &&
+                       log.PlayerId == drawingPlayerId &&
+                       log.ActionType == "DrawCard" &&
+                       log.CardDefinitionId == cardDefinitionId
+            )), Times.Once);
+        }
+
+        [Fact]
+        public async Task DrawCardAsync_ShouldFailIfPlayerIsNotCurrentTurnPlayer()
+        {
+            // Arrange
+            int gameId = 1;
+            int drawingPlayerId = 1;
+            int otherPlayerId = 2;
+
+            var game = new Game { GameId = gameId, CurrentTurnPlayerId = otherPlayerId }; // Not drawing player's turn
+            _mockGameRepository.Setup(r => r.GetGameByIdAsync(gameId)).ReturnsAsync(game);
+
+            // Act
+            var result = await _gameService.DrawCardAsync(gameId, drawingPlayerId);
+
+            // Assert
+            Assert.False(result); // Should fail
+
+            // Verify that no card updates or log entries happened for the draw action
+            _mockGameRepository.Verify(r => r.UpdateGameCardAsync(It.IsAny<GameCard>()), Times.Never);
+            _mockGameRepository.Verify(r => r.AddGameLogEntryAsync(It.IsAny<GameLogEntry>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task DeployCardAsync_ShouldMoveCardToZoneAndDeduct()
+        {
+            // Arrange
+            int gameId = 1;
+            int deployingPlayerId = 1;
+            int gameCardId = 200;
+            int cardDefId = 20;
+            int deployCost = 5;
+            GameZone targetZone = GameZone.CharacterZone;
+
+            var game = new Game
+            {
+                GameId = gameId,
+                Player1Id = deployingPlayerId,
+                CurrentTurnPlayerId = deployingPlayerId,
+                Player1Force = 10, // Enough force
+                Player2Id = 99 // Placeholder
+            };
+            game.SetTurnNumber(1);
+
+            var cardInHand = new GameCard
+            {
+                GameCardId = gameCardId,
+                GameId = gameId,
+                CardDefinitionId = cardDefId,
+                OwnerPlayerId = deployingPlayerId,
+                CurrentPlayerId = deployingPlayerId,
+                Zone = GameZone.Hand.ToString()
+            };
+
+            var cardDef = new CardDefinition
+            {
+                CardDefinitionId = cardDefId,
+                CardName = "Test Character",
+                DeployCost = deployCost
+            };
+
+            _mockGameRepository.Setup(r => r.GetGameByIdAsync(gameId)).ReturnsAsync(game);
+            _mockGameRepository.Setup(r => r.GetGameCardsByGameIdAsync(gameId))
+                .ReturnsAsync(new List<GameCard> { cardInHand });
+            _mockCardDefinitionRepository.Setup(r => r.GetAllCardDefinitionsAsync())
+                .ReturnsAsync(new List<CardDefinition> { cardDef });
+            _mockGameRepository.Setup(r => r.UpdateGameCardAsync(It.IsAny<GameCard>())).Returns(Task.CompletedTask);
+            _mockGameRepository.Setup(r => r.UpdateGameAsync(It.IsAny<Game>())).Returns(Task.CompletedTask);
+            _mockGameRepository.Setup(r => r.AddGameLogEntryAsync(It.IsAny<GameLogEntry>())).Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _gameService.DeployCardAsync(gameId, deployingPlayerId, gameCardId, targetZone);
+
+            // Assert
+            Assert.True(result);
+
+            // Verify card moved zone and untap
+            _mockGameRepository.Verify(r => r.UpdateGameCardAsync(It.Is<GameCard>(
+                gc => gc.GameCardId == gameCardId &&
+                      gc.Zone == targetZone.ToString() &&
+                      !gc.IsTapped
+            )), Times.Once);
+
+            // Verify force deduction
+            _mockGameRepository.Verify(r => r.UpdateGameAsync(It.Is<Game>(
+                g => g.GameId == gameId && g.Player1Force == (10 - deployCost) // Initial 10 - 5 cost = 5
+            )), Times.Once);
+
+            // Verify log entry
+            _mockGameRepository.Verify(r => r.AddGameLogEntryAsync(It.Is<GameLogEntry>(
+                log => log.ActionType == "DeployCard" && log.PlayerId == deployingPlayerId && log.CardDefinitionId == cardDefId
+            )), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeployCardAsync_ShouldFailIfInsufficient()
+        {
+            // Arrange
+            int gameId = 1;
+            int deployingPlayerId = 1;
+            int gameCardId = 200;
+            int cardDefId = 20;
+            int deployCost = 15; // Higher than available force
+            GameZone targetZone = GameZone.CharacterZone;
+
+            var game = new Game
+            {
+                GameId = gameId,
+                Player1Id = deployingPlayerId,
+                CurrentTurnPlayerId = deployingPlayerId,
+                Player1Force = 10, // Only 10 force
+                Player2Id = 99
+            };
+            game.SetTurnNumber(1);
+
+            var cardInHand = new GameCard
+            {
+                GameCardId = gameCardId,
+                GameId = gameId,
+                CardDefinitionId = cardDefId,
+                OwnerPlayerId = deployingPlayerId,
+                CurrentPlayerId = deployingPlayerId,
+                Zone = GameZone.Hand.ToString()
+            };
+
+            var cardDef = new CardDefinition
+            {
+                CardDefinitionId = cardDefId,
+                CardName = "Expensive Character",
+                DeployCost = deployCost
+            };
+
+            _mockGameRepository.Setup(r => r.GetGameByIdAsync(gameId)).ReturnsAsync(game);
+            _mockGameRepository.Setup(r => r.GetGameCardsByGameIdAsync(gameId))
+                .ReturnsAsync(new List<GameCard> { cardInHand });
+            _mockCardDefinitionRepository.Setup(r => r.GetAllCardDefinitionsAsync())
+                .ReturnsAsync(new List<CardDefinition> { cardDef });
+            _mockGameRepository.Setup(r => r.AddGameLogEntryAsync(It.IsAny<GameLogEntry>())).Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _gameService.DeployCardAsync(gameId, deployingPlayerId, gameCardId, targetZone);
+
+            // Assert
+            Assert.False(result); // Should fail
+
+            // Verify no card or game state updates happened
+            _mockGameRepository.Verify(r => r.UpdateGameCardAsync(It.IsAny<GameCard>()), Times.Never);
+            _mockGameRepository.Verify(r => r.UpdateGameAsync(It.IsAny<Game>()), Times.Never);
+
+            // Verify log entry for failure
+            _mockGameRepository.Verify(r => r.AddGameLogEntryAsync(It.Is<GameLogEntry>(
+                log => log.ActionType == "DeployAttemptFailed" && log.PlayerId == deployingPlayerId &&
+                       log.Details.Contains("Insufficient Force")
+            )), Times.Once);
+        }
+
+        [Fact]
+        public async Task EndTurnAsync_ShouldSwitchTurnPlayerAndUntapNextPlayersCards()
+        {
+            // Arrange
+            int gameId = 1;
+            int player1Id = 10;
+            int player2Id = 20;
+
+            var game = new Game
+            {
+                GameId = gameId,
+                Player1Id = player1Id,
+                Player2Id = player2Id,
+                CurrentTurnPlayerId = player1Id,
+                CurrentPhase = GamePhase.Battle.ToString()
+            };
+            game.SetTurnNumber(1);
+
+            var player2TappedCard = new GameCard
+            {
+                GameCardId = 300,
+                GameId = gameId,
+                OwnerPlayerId = player2Id,
+                CurrentPlayerId = player2Id,
+                IsTapped = true,
+                Zone = GameZone.CharacterZone.ToString()
+            };
+            var player2UntappedCard = new GameCard
+            {
+                GameCardId = 301,
+                GameId = gameId,
+                OwnerPlayerId = player2Id,
+                CurrentPlayerId = player2Id,
+                IsTapped = false,
+                Zone = GameZone.CharacterZone.ToString()
+            };
+            var player1TappedCard = new GameCard
+            {
+                GameCardId = 302,
+                GameId = gameId,
+                OwnerPlayerId = player1Id,
+                CurrentPlayerId = player1Id,
+                IsTapped = true,
+                Zone = GameZone.CharacterZone.ToString()
+            };
+
+            _mockGameRepository.Setup(r => r.GetGameByIdAsync(gameId)).ReturnsAsync(game);
+            _mockGameRepository.Setup(r => r.GetGameCardsByGameIdAsync(gameId))
+                .ReturnsAsync(new List<GameCard> { player2TappedCard, player2UntappedCard, player1TappedCard });
+            _mockGameRepository.Setup(r => r.UpdateGameAsync(It.IsAny<Game>())).Returns(Task.CompletedTask);
+            _mockGameRepository.Setup(r => r.UpdateGameCardAsync(It.IsAny<GameCard>())).Returns(Task.CompletedTask);
+            _mockGameRepository.Setup(r => r.AddGameLogEntryAsync(It.IsAny<GameLogEntry>())).Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _gameService.EndTurnAsync(gameId, player1Id);
+
+            // Assert
+            Assert.True(result);
+
+            // Verify game state updated: turn switched, phase changed, turn number incremented
+            _mockGameRepository.Verify(r => r.UpdateGameAsync(It.Is<Game>(
+                g => g.GameId == gameId &&
+                     g.CurrentTurnPlayerId == player2Id &&
+                     g.CurrentPhase == GamePhase.Draw.ToString() &&
+                     g.TurnNumber() == 2 // From 1 to 2
+            )), Times.Once);
+
+            // Verify player2's tapped card is untap-updated
+            _mockGameRepository.Verify(r => r.UpdateGameCardAsync(It.Is<GameCard>(
+                gc => gc.GameCardId == player2TappedCard.GameCardId && !gc.IsTapped
+            )), Times.Once);
+
+            // Verify player2's already untapped card was not updated for IsTapped
+            _mockGameRepository.Verify(r => r.UpdateGameCardAsync(It.Is<GameCard>(
+                gc => gc.GameCardId == player2UntappedCard.GameCardId && gc.IsTapped == false
+            )), Times.Never); // It was already false, no need to update
+
+            // Verify player1's tapped card was NOT untap-updated (it's no longer their turn)
+            _mockGameRepository.Verify(r => r.UpdateGameCardAsync(It.Is<GameCard>(
+                gc => gc.GameCardId == player1TappedCard.GameCardId && !gc.IsTapped
+            )), Times.Never);
+
+            // Verify log entry
+            _mockGameRepository.Verify(r => r.AddGameLogEntryAsync(It.Is<GameLogEntry>(
+                log => log.ActionType == "EndTurn" && log.PlayerId == player1Id &&
+                       log.Details.Contains($"\"NextPlayerId\":{player2Id}")
+            )), Times.Once);
+        }
+
+    }
+}

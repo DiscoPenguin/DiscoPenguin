@@ -1,0 +1,37 @@
+<div class="modal-content">
+  <div class="modal-header">
+    <h5 class="modal-title" id="fileUploadModalLabel">File Upload & Processing</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()"></button>
+  </div>
+  <div class="modal-body">
+    <div class="mb-3">
+      <label for="fileInput" class="form-label d-block">
+        <button type="button" class="btn btn-primary" (click)="fileInput.click()">
+          <i class="bi bi-folder-open"></i> Select File </button>
+        <span *ngIf="selectedFile" class="ms-2 fw-bold">{{ selectedFile.name }}</span>
+        <span *ngIf="!selectedFile" class="ms-2 text-muted">No file chosen</span>
+      </label>
+      <input type="file" #fileInput id="fileInput" (change)="onFileSelected($event)" accept=".dek,.txt,.csv,.log" class="d-none">
+    </div>
+
+    <div class="progress-section mt-4 pt-3 border-top">
+      <p class="alert alert-info py-2 px-3 mb-3">{{ currentMessage }}</p>
+      <p *ngIf="currentCardName.length > 3" class="alert alert-info py-2 px-3 mb-3">{{ currentCardName }}</p>
+      <div *ngIf="isDigesting || digestionProgress > 0" class="mb-3">
+        <p class="fw-bold mb-1">Digestion Progress:</p>
+        <div class="progress" style="height: 10px;">
+          <div class="progress-bar bg-info" role="progressbar" [style.width]="digestionProgress + '%'"
+               [attr.aria-valuenow]="digestionProgress" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <div class="text-end mt-1">{{ digestionProgress }}%</div>
+      </div>
+
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+    <button type="button" class="btn btn-primary" [disabled]="!selectedFile || isUploading || isDigesting" (click)="uploadFile()">
+      <i class="bi bi-cloud-upload"></i> Upload
+    </button>
+  </div>
+</div>

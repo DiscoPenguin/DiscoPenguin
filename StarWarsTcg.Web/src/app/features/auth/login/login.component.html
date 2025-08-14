@@ -1,0 +1,27 @@
+<div class="loginPanel"> <!-- //TODO: [busyIf]-->
+  <form (ngSubmit)="login()" (click)="$event.stopPropagation()">
+  <div class="row">
+    <span *ngIf="errorMessage" class="alert alert-danger pb-3">{{ errorMessage }}</span>
+  </div>
+  <div class="row">
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input type="text" id="username" [(ngModel)]="username" name="username" class="form-control" required>
+    </div>
+  </div>
+  <div class="row">
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" [(ngModel)]="password" name="password" class="form-control" required>
+    </div>
+  </div>
+  <div class="row m-2">
+    <div class="col-4"></div>
+    <div class="col">
+      <button type="submit" class="center-button btn btn-primary" (click)="login()">Login</button>
+    </div>
+    <div class="col-4"></div>
+  </div>
+
+  </form>
+</div>

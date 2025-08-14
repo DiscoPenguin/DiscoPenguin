@@ -1,0 +1,42 @@
+<div class="item" [ngClass]="['card', size]">
+    <div class="row card-header item-header">
+        <div *ngIf="frequency > 0 && showFront" class="col-lg-5 col-sm-5 item-header-left" style="color:white">
+            <i style="color:yellow" class="fa fa-star"></i> {{ totalQuantity }} (<i class="fa fa-boxes"></i>{{ frequency }})
+        </div>
+        <div *ngIf="frequency > 0 && showFront" class="col-lg-6 col-sm-6 item-header-right" style="color:white">
+            <img 
+                src="/assets/images/expansions/{{ card?.expansionSet }}.png" 
+                class="icon" 
+                title="{{ card?.expansionSet }}"
+            />
+            {{ card?.number }}/999
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="item-image">
+            <img *ngIf="showFront" 
+                class="item-image" 
+                [ngClass]="alignment(card?.type)"
+                src="/assets/images/cards/{{card?.expansionSet}}/{{card?.imageFile}}.jpg"
+                title="{{card?.name}}" 
+                (click)="toggleCard()" />
+            <img *ngIf="!showFront" class="item-image" [src]="'assets/images/cards/cardback.jpg'" (click)="toggleCard()" />
+        </div>
+    </div>
+
+    <div *ngIf="showFront" class="card-footer">
+        <h4 class="item-name">{{card?.name}}</h4>
+        <h4 class="sub-item-name">{{ card?.subtype }}</h4>
+        <ul class="card-text">
+            <li><span [ngClass]="'text-' + card?.type">Type</span><em>{{card?.type}}</em></li>
+            <li>Rarity<em>{{card?.rarity}}</em></li>
+            <li>Cost<em>{{card?.cost}}</em></li>
+            <li>Speed<em>{{card?.speed}}</em></li>
+            <li>Power<em>{{card?.power}}</em></li>
+            <li>Health<em>{{card?.health}}</em></li>
+        </ul>
+        <button class="btn-flipcard btn btn-primary" (click)="toggleCard()">
+            {{ showFront ? 'Show Back' : 'Show Front' }}
+        </button>
+    </div>
+</div>

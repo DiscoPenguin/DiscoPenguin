@@ -1,0 +1,19 @@
+.app-busy-container {
+  position: relative; /* Crucial for positioning the absolute overlay */
+  min-height: 50px; /* Ensure there's enough space for the overlay */
+  overflow: hidden; /* Hide any content that might overflow due to absolute positioning */
+}
+
+/* Style for the overlay itself */
+.app-busy-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent white background */
+  z-index: 999; /* Ensure it's above other content */
+}

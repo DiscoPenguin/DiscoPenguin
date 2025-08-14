@@ -1,0 +1,186 @@
+html,
+body {
+  background-color: #1f2122;
+  font-family: 'Poppins', sans-serif;
+
+  background-image: url(/assets/images/backplates/starfield.jpg);
+  background-size: cover;
+  background-color: #1f2122;
+  background-position: center center;
+}
+body .page-content {
+  /* margin-top: 110px; */
+  background-color: #27292a;
+  padding: 30px;
+  border-radius: 23px;
+}
+.icon {
+  width: 16px;
+  height: 16px;
+}
+.icon-2x {
+  width: 32px;
+  height: 32px;
+}
+.icon-3x {
+  width: 48px;
+  height: 48px;
+}
+.icon-4x {
+  width: 64px;
+  height: 64px;
+}
+.icon-5x {
+  width: 80px;
+  height: 80px;
+}
+
+.main-button {
+  text-align: center;
+  margin-bottom: -1.5em;
+}
+
+.styled-button {
+  font-size: 14px;
+  color: #fff;
+  background-color: #e75e8d;
+  padding: 12px 30px;
+  display: inline-block;
+  border-radius: 25px;
+  font-weight: 400;
+  text-transform: capitalize;
+  letter-spacing: 0.5px;
+  transition: all .3s;
+  position: relative;
+  overflow: hidden;
+  border: none;
+}
+
+.styled-button:hover {
+  background-color: #fff;
+  color: #e75e8d;
+}
+
+.main-border-button a {
+  font-size: 14px;
+  color: #ec6090;
+  background-color: transparent;
+  border: 1px solid #ec6090;
+  padding: 12px 30px;
+  display: inline-block;
+  border-radius: 25px;
+  font-weight: 400;
+  text-transform: capitalize;
+  letter-spacing: 0.5px;
+  transition: all .3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.main-border-button a:hover {
+  border-color: #fff;
+  background-color: #fff;
+  color: #e75e8d;
+}
+
+.input-container {
+    position: relative;
+}
+
+.backlight-input {
+    padding: 10px 15px;
+    font-size: 16px;
+    border: 2px solid transparent;
+    border-radius: 5px;
+    outline: none;
+    background-color: #fff;
+    transition: border-color 0.3s ease;
+}
+
+.backlight-input:focus {
+    border-color: transparent; /* Hide the default border */
+}
+
+.backlight-input:focus::placeholder {
+    color: transparent; /* Hide the placeholder text on focus */
+}
+
+.backlight-input:focus + .backlight {
+    animation: glow 1.5s infinite alternate;
+}
+
+.backlight {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 5px;
+    background: linear-gradient(270deg, rgba(255, 255, 0, 0.5), rgba(255, 0, 0, 0.5));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.backlight-input:focus + .backlight {
+    opacity: 1;
+}
+
+@keyframes glow {
+    0% {
+        box-shadow: 0 0 10px rgba(255, 255, 0, 0.5);
+    }
+    100% {
+        box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+    }
+}
+
+.text-battle, .text-Battle {
+  color: rgba(255, 99, 132, 0.8);
+}
+.text-space, .text-Space {
+  color: rgba(54, 162, 235, 0.8);
+}
+.text-mission, .text-Mission {
+  color: rgba(255, 206, 86, 0.8);
+}
+.text-ground, .text-Ground {
+  color: rgb(51, 240, 124);
+}
+.text-character, .text-Character {
+  color: rgba(153, 102, 255, 0.8);
+}
+.text-equipment, .text-Equipment {
+  color: rgb(168,176,178);
+}
+.text-location, .text-Location {
+  color: rgb(173,125,55);
+}
+
+.bg-battle, .bg-Battle {
+  color: black;
+  background-color: rgba(255, 99, 132, 0.8);
+}
+.bg-space, .bg-Space {
+  color: black;
+  background-color: rgba(54, 162, 235, 0.8);
+}
+.bg-mission, .bg-Mission {
+  color: black;
+  background-color: rgba(255, 206, 86, 0.8);
+}
+.bg-ground, .bg-Ground {
+  color: black;
+  background-color: rgb(51, 240, 124);
+}
+.bg-character, .bg-Character {
+  color: black;
+  background-color: rgba(153, 102, 255, 0.8);
+}
+.bg-equipment, .bg-Equipment {
+  color: black;
+  background-color: rgb(168,176,178);
+}
+.bg-location, .bg-Location {
+  color: black;
+  background-color: rgb(173,125,55);
+}

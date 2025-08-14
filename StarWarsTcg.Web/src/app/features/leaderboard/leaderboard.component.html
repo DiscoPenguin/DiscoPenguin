@@ -1,0 +1,34 @@
+<div class="header-text m-1">
+  <h4 style="text-align: center"><em>{{ title }}</em></h4>
+  <table class="table table-striped">
+    <thead>
+      <tr class="top-header">
+        <th *ngIf="!userId"></th>
+        <th>Total</th>
+        <th colspan="2" style="text-align: center"><img src="/assets/images/expansions/LightSaber_D.png" class="icon" alt="Dark Side" />&nbsp;Dark Side</th>
+        <th colspan="2" style="text-align: center"><img src="/assets/images/expansions/LightSaber_L.png" class="icon" alt="Light Side" />&nbsp;Light Side</th>
+        <th>Total</th>
+      </tr>
+      <tr class="bottom-header">
+        <th *ngIf="!userId">Name</th>
+        <th>Games</th>
+        <th>Games</th>
+        <th>Wins</th>
+        <th>Games</th>
+        <th>Wins</th>
+        <th>Wins</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let l of leaderboardData | slice:0:5">
+        <td *ngIf="!userId" style="text-align: left"><img *ngIf="l.avatarUrl" [src]="l.avatarUrl" class="icon" /> {{ l.firstName }} {{ l.lastName }}</td>
+        <td>{{ l.totalGames }}</td>
+        <td>{{ l.lightGames }}</td>
+        <td>{{ l.lightWins }}</td>
+        <td>{{ l.darkGames }}</td>
+        <td>{{ l.darkWins }}</td>
+        <td>{{ l.totalWins }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

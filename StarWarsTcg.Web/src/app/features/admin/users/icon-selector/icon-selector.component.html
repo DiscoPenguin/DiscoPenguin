@@ -1,0 +1,11 @@
+<div class="icon-grid">
+    <div *ngFor="let icon of icons" class="icon-item">
+      <img 
+        [src]="icon.url" 
+        [alt]="icon.name" 
+        [title]="icon.name" 
+        [ngClass]="{ 'selected' : icon.id === chosenAsset}" 
+        (click)="selectIcon(icon)"
+      />
+    </div>
+  </div>

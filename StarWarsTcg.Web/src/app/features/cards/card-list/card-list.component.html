@@ -1,0 +1,220 @@
+<!-- Shopping Cart -->
+<div id="offcanvasCart" class="offcanvas offcanvas-end me-3" data-bs-scroll="true" tabindex="-1"
+  aria-labelledby="My Cart">
+  <div class="offcanvas-toolbar">
+    <div class="FABMenu">
+      <input type="checkbox" />
+      <div class="hamburger">
+        <div class="dots">
+          <span class="first"></span>
+          <span class="second"></span>
+          <span class="third"></span>
+        </div>
+      </div>
+      <div class="action_items_bar">
+        <div class="action_items">
+          <span class="first_item">
+            <!-- https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_subnav -->
+            <div class="subnav">
+              <i class="fa fa-cubes" aria-hidden="true" title="Deck Builder"></i>
+              <div class="subnav-content">
+                <ul class="nav nav-tabs" role="tabList">
+                  <li class="nav-item" role="presentation">
+                    <button class="subnavbtn nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home"
+                      type="button" role="tab" aria-controls="home" aria-selected="true">
+                      <span class="badge bg-primary rounded-pill">{{ deckCardQuantity() }}</span>&nbsp;
+                      <i class="fa fa-cubes" aria-hidden="true"></i> Deck</button>
+                  </li>
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link subnavbtn" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile"
+                      type="button" role="tab" aria-controls="profile" aria-selected="false">
+                      <span *ngIf="errors" class="badge rounded-pill"
+                        [ngClass]="{ 'text-danger' : errors.length > 0, 'text-success' : errors.length <= 0}">
+                        {{ errors.length}}
+                      </span>
+                      <i *ngIf="errors.length > 0" class="text-danger fa fa-exclamation-triangle"
+                        aria-hidden="true"></i>
+                      <i *ngIf="errors.length <= 0" class="text-success fa fa-check-circle" aria-hidden="true"></i>
+                      Validation
+                    </button>
+                  </li>
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link subnavbtn" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact"
+                      type="button" role="tab" aria-controls="contact" aria-selected="false"><i class="fa fa-pie-chart"
+                        aria-hidden="true"></i> Breakdown</button>
+                  </li>
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link subnavbtn" id="trashDeck" type="button" role="tab" (click)="emptyDeck()">
+                      <i class="fa fa-trash" aria-hidden="true" title="Trash"></i> Start Over
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </div>            
+          </span>
+          <span class="second_item">
+              <div class="subnav">
+                <i class="fa fa-book" aria-hidden="true" title="Decks"></i>
+                <div class="subnav-content">
+                  <ul class="nav nav-tabs" role="tabList">
+                    <li class="nav-item" role="presentation">
+                      <button class="nav-link subnavbtn" id="importDeck" type="button" role="tab" (click)="loadDeck()">
+                        <i class="fa fa-download" aria-hidden="true" title="Load a deck file"></i> Import
+                      </button>
+                    </li>
+                    <li class="nav-item" role="presentation" *ngIf="authService.isAuthenticated();">
+                      <!-- TODO: Browse Decks -->
+                      <button class="nav-link subnavbtn" id="browseDecks" type="button" role="tab">
+                        <i class="fa fa-layer-group" aria-hidden="true" title="Browse decks"></i> Browse
+                      </button>
+                    </li>
+                    <li>
+                      <ng-container *ngIf="authService.isAuthenticated(); else anonymousTemplate">
+                        <button 
+                          id="submitDeck" type="button" role="tab" (click)="submitDeck()"
+                          class="nav-link subnavbtn" 
+                          [ngClass]="{ 'text-danger' : errors.length > 0, 'text-success' : errors.length <= 0}"
+                          [disabled]="errors.length > 0"
+                        >
+                          <i class="fa fa-upload" aria-hidden="true"
+                            title="Submit your deck"></i> Submit
+                        </button>
+                      </ng-container>
+                      <ng-template #anonymousTemplate>
+                        <!-- TODO: Login to submit your deck; Requires anonymous deck build on database 
+                                    (click)="login()"
+                         -->
+                        <button 
+                          id="submitDeck" type="button" role="tab" 
+                          class="nav-link subnavbtn" 
+                        >
+                          <i class="fa fa-right-to-bracket fa-lg text-warning" aria-hidden="true" title="Login to save your deck"></i> Login
+                        </button>
+                        
+                      </ng-template>                      
+                    </li>
+                  </ul>
+                </div>
+              </div>
+          </span>
+          <span class="third_item">
+
+          </span>
+          <span class="fourth_item">
+
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="offcanvas-header">
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close" style="z-index:100;"></button>
+  </div>
+
+  <div class="offcanvas-body">
+
+    <div class="tab-content" id="myTabContent">
+      <div id="home" role="tabpanel" aria-labelledby="home-tab" class="tab-pane fade show active">
+        <h2 class="mb-3">
+            <span class="badge rounded-pill"
+              [ngClass]="{ 'bg-danger' : errors.length > 0, 'bg-success' : errors.length <= 0}">
+              {{ deckCardQuantity() }}</span>
+           <app-editable-label [(value)]="deckName"></app-editable-label>
+        </h2>
+        <p class="lead"><app-editable-label [(value)]="deckDescription"></app-editable-label></p>
+
+        <div class="order-md-last vertical-scroll-container pe-1" style="z-index: 100; overflow-y: scroll;">
+
+          <div class="product" *ngFor="let c of deckCards; trackBy: trackByCardId">
+            <ng-container *ngIf="cardCache[c.cardId]; else loading">
+              <div class="row mb-3">
+                <div class="col-md-3">
+                  <img class="item-image-s"
+                    [ngClass]="alignment(cardCache[c.cardId]?.type)"
+                    src="/assets/images/cards/{{cardCache[c.cardId]?.expansionSet}}/{{cardCache[c.cardId]?.imageFile}}.jpg"
+                    title="{{cardCache[c.cardId]?.name}}" />
+                </div>
+                <div class="col-md-8 ms-3">
+                  <div class="info">
+                    <div class="row">
+                      <div class="col-md-1">
+                        <img class="icon" [src]="forceIcon(cardCache[c.cardId]?.side)" />
+                        <img src="/assets/images/expansions/{{ cardCache[c.cardId]?.expansionSet }}.png" class="icon"
+                          title="{{ cardCache[c.cardId]?.expansionSet }}" />
+                      </div>
+                      <div class="col">
+                        <h5>{{ cardCache[c.cardId]?.name }}</h5>
+                      </div>
+                      <div class="col-md-1">
+                        <i class="fa fa-trash text-danger" (click)="removeCardFromDeck(c)"></i>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <!-- TODO: If not a Unit, display Mission/Battle/Equipment/etc. -->
+                      <div class="col-md-6">
+                        <div class="product-info">
+                          <div>Cost: <span class="value">{{ cardCache[c.cardId].cost }}</span></div>
+                          <div>Health: <span class="value">{{ cardCache[c.cardId].health }}</span></div>
+                          <div>Power: <span class="value">{{ cardCache[c.cardId].power }}</span></div>
+                          <div>Speed: <span class="value">{{ cardCache[c.cardId].speed }}</span></div>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="product-info">
+                          <div>Quantity: <span class="value">{{ c.quantity }}</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+            <ng-template #loading>
+              <div class="col-md-12">
+                <p>Loading...</p>
+              </div>
+            </ng-template>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="profile" role="tabpanel" aria-labelledby="profile-tab" class="tab-pane fade">
+        <h2 class="mb-3">Validation</h2>
+        <p class="lead"></p>
+        <div class="order-md-last vertical-scroll-container">
+          <div class="product" *ngFor="let e of errors">
+            <p>{{ e }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="contact" role="tabpanel" aria-labelledby="contact-tab" class="tab-pane fade">
+        <app-doughnut-chart [title]="title" [subtitle]="subtitle"
+          [chartData]="myDoughnutChartData"></app-doughnut-chart>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- /Shopping Cart -->
+
+<!-- Shopping Cart link -->
+<button class="fixed-button border-0 bg-transparent d-flex flex-column gap-2 lh-1" type="button"
+  data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
+  <span class="text-warning">
+    <i class="fa-solid fa-cart-shopping"></i>
+    &nbsp;Your Deck
+  </span>
+</button>
+<!-- /Shopping Cart link -->
+
+<div class="searchPage">
+  <div class="page-content">
+    <app-card-search 
+      (addCard)="cardAction($event, 'Add')"
+      (removeCard)="cardAction($event, 'Remove')"
+    ></app-card-search>
+  </div>
+</div>

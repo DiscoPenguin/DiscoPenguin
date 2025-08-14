@@ -1,0 +1,130 @@
+using Dapper;
+using StarWarsTcgApi.Domain.Entities;
+using StarWarsTcgApi.Domain.Interfaces;
+using StarWarsTcgApi.Infrastructure.Data;
+using BCrypt.Net; // For password hashing
+
+namespace StarWarsTcgApi.Infrastructure.Repositories
+{
+    public class UserRepository : IUserRepository
+    {
+        private readonly MySqlConnectionFactory _connectionFactory;
+
+        public UserRepository(MySqlConnectionFactory connectionFactory)
+        {
+            _connectionFactory = connectionFactory;
+        }
+
+        public async Task<User?> GetByUsernameAsync(string username)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            var sql = @"
+                SELECT u.Id, u.Username, u.PasswordHash, u.Salt, u.Email, u.DateCreated, u.LastLogin,
+                       r.Id, r.Name
+                FROM Users u
+                LEFT JOIN UserRoles ur ON u.Id = ur.UserId
+                LEFT JOIN Roles r ON ur.RoleId = r.Id
+                WHERE u.Username = @Username";
+
+            var userDictionary = new Dictionary<int, User>();
+
+            var users = await connection.QueryAsync<User, Role, User>(
+                sql,
+                (user, role) =>
+                {
+                    if (!userDictionary.TryGetValue(user.Id, out var currentUser))
+                    {
+                        currentUser = user;
+                        currentUser.Roles = new List<Role>();
+                        userDictionary.Add(currentUser.Id, currentUser);
+                    }
+
+                    if (role != null)
+                    {
+                        currentUser.Roles.Add(role);
+                    }
+                    return currentUser;
+                },
+                new { Username = username },
+                splitOn: "Id"); // 'Id' is the split point for the Role object
+
+            return users.FirstOrDefault();
+        }
+
+        public async Task<User?> GetByIdAsync(int id)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            var sql = @"
+                SELECT u.Id, u.Username, u.PasswordHash, u.Salt, u.Email, u.DateCreated, u.LastLogin,
+                       r.Id, r.Name
+                FROM Users u
+                LEFT JOIN UserRoles ur ON u.Id = ur.UserId
+                LEFT JOIN Roles r ON ur.RoleId = r.Id
+                WHERE u.Id = @Id";
+
+            var userDictionary = new Dictionary<int, User>();
+
+            var users = await connection.QueryAsync<User, Role, User>(
+                sql,
+                (user, role) =>
+                {
+                    if (!userDictionary.TryGetValue(user.Id, out var currentUser))
+                    {
+                        currentUser = user;
+                        currentUser.Roles = new List<Role>();
+                        userDictionary.Add(currentUser.Id, currentUser);
+                    }
+
+                    if (role != null)
+                    {
+                        currentUser.Roles.Add(role);
+                    }
+                    return currentUser;
+                },
+                new { Id = id },
+                splitOn: "Id");
+
+            return users.FirstOrDefault();
+        }
+
+        public async Task AddAsync(User user, List<int> roleIds)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open(); // Open the connection before starting a transaction
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                // Insert User
+                var userSql = @"
+                    INSERT INTO Users (Username, PasswordHash, Salt, Email, DateCreated)
+                    VALUES (@Username, @PasswordHash, @Salt, @Email, @DateCreated);
+                    SELECT LAST_INSERT_ID();"; // Get the ID of the newly inserted user
+
+                var userId = await connection.ExecuteScalarAsync<int>(userSql, user, transaction: transaction);
+                user.Id = userId; // Update the user object with the new ID
+
+                // Insert UserRoles
+                if (roleIds != null && roleIds.Any())
+                {
+                    var userRoleSql = "INSERT INTO UserRoles (UserId, RoleId) VALUES (@UserId, @RoleId);";
+                    var userRoles = roleIds.Select(roleId => new { UserId = userId, RoleId = roleId });
+                    await connection.ExecuteAsync(userRoleSql, userRoles, transaction: transaction);
+                }
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw; // Re-throw the exception after rollback
+            }
+        }
+
+        public async Task<bool> UsernameExistsAsync(string username)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            var sql = "SELECT COUNT(1) FROM Users WHERE Username = @Username";
+            return await connection.ExecuteScalarAsync<bool>(sql, new { Username = username });
+        }
+    }
+}

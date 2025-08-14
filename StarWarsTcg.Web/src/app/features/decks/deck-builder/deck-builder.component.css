@@ -1,0 +1,55 @@
+    div {
+      font-family: 'Arial', sans-serif;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #fff;
+    }
+
+    .cart-item {
+      margin-bottom: 15px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .product-info {
+      flex-grow: 1;
+      color: #fff;
+    }
+
+    .remove-button {
+      background-color: #dc3545;
+      color: #fff;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .total-amount {
+      margin-top: 15px;
+      font-size: 18px;
+      color: #dc3545;
+    }
+
+    .add-button {
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .discount {
+      margin-left: 15px;
+    }
+    .discount:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }

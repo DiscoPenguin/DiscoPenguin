@@ -1,0 +1,89 @@
+.card {
+  border: solid 1px #ec6090;
+  background-color: #1f2122;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.card:hover {
+  transform: scale(1.05);
+  z-index: 9999;
+}
+.card .card-header {
+  height: auto;
+  padding: 0px;
+  font-size: .75em;
+}
+.card .card-body {
+  padding: 2px;
+}
+.card .item-name {
+  width: 100%;
+  font-size: 15px;
+  color: #ec6090;
+  text-align:center;  
+}
+.card .sub-item-name {
+  text-align: center;
+  font-size: .75em;
+  color: white;
+}
+.card .item-image {
+  display: block;
+  height: auto;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50;
+  max-width: 100%;
+  max-height: 240px;
+}
+.card .card-footer {
+  border-radius: 23px;
+  background-color: #27292a;
+  text-align: left;
+}
+
+.card-text {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+.card-text ul {
+  padding-left: 0px;
+}
+.card-text li {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0; 
+  color: #666;
+  border-bottom: 1px solid #666;
+}
+
+.card-text li em {
+  margin-left: auto;
+  color: #ec6090;
+}
+
+.btn-flipcard {
+  width: 100%;
+  text-align: center;
+}
+
+.xs {
+  width: 100px;
+}
+
+.s {
+  width: 150px;
+}
+
+.m {
+  width: 200px;
+}
+
+.l {
+  width: 250px;
+}
+
+.xl {
+  width: 300px;
+}
