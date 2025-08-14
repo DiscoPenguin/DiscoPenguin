@@ -1,8 +1,0 @@
-<div class="editable-label-container">
-  <ng-container *ngIf="isEditing; else editable">
-    <input [(ngModel)]="_internalLabelValue" class="edit-input" /> <button (click)="toggleEditMode()" class="save-button">Save</button>
-  </ng-container>
-  <ng-template #editable>
-    <span class="label-text">{{ value }}</span> <button (click)="toggleEditMode()" class="edit-button">Edit</button>
-  </ng-template>
-</div>

@@ -1,6 +1,0 @@
-@StarWarsTcgApi.Api_HostAddress = http://localhost:5020
-
-GET {{StarWarsTcgApi.Api_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
